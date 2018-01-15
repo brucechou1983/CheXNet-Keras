@@ -1,0 +1,7 @@
+h5py==2.7.1
+Keras==2.1.2
+numpy==1.14.0
+pandas==0.22.0
+Pillow==5.0.0
+scikit-learn==0.19.1
+tensorflow-gpu==1.4.1

@@ -1,0 +1,7 @@
+.python-version
+densenet121_weights_tf.h5
+/**/__pycache__
+/data/images
+/.idea
+/experiments
+/data/Data_Entry_2017.csv
