@@ -13,6 +13,7 @@ ChexNet is a deep learning algorithm that can detect and localize 14 kinds of di
 4. Every time you do a new experiment, make sure you modify `output_dir` in `config.ini` otherwise previous training results might be overwritten. For more options check the parameter description in `config.ini`.
 
 ## Quickstart
+**Note that currently this project can only be executed in Linux and macOS. You might run into some issues in Windows.**
 1. Download **all tar files** and **Data_Entry_2017.csv** of ChestX-ray14 dataset from [NIH dropbox](https://nihcc.app.box.com/v/ChestXray-NIHCC). Put them under `./data` folder and untar all tar files.
 2. Download DenseNet-121 ImageNet tensorflow pretrained weights from [DenseNet-Keras](https://drive.google.com/open?id=0Byy2AcGyEVxfSTA4SHJVOHNuTXc). Specify the file path in `config.ini` (field: `base_model_weights_file`)
 3. Create & source a new virtualenv. Python >= **3.6** is required.
