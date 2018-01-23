@@ -26,24 +26,6 @@ def load_generator_data(generator, steps, class_num=14):
     return np.concatenate(batches_x, axis=0), [np.concatenate(c, axis=0) for c in batches_y_classes]
 
 
-class ROAUC(Callback):
-    def __init__(self, generator, steps):
-        super(Callback, self).__init__()
-        self.x_dev, self.y_dev = load_generator_data(generator, steps)
-
-    def on_train_begin(self, logs={}):
-        self.aurocs = []
-
-    def on_epoch_end(self, epoch, logs={}):
-        # auroc
-        auroc = roc_auc_score(
-            self.y_dev,
-            self.model.predict(self.x_dev))
-        self.aurocs.append(auroc)
-        print(f"\n** validation auroc: {auroc} **")
-        return
-
-
 class MultipleClassAUROC(Callback):
     """
     Monitor mean AUROC and update model
