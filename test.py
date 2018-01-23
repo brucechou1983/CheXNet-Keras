@@ -42,7 +42,7 @@ def main():
         batch_size=batch_size,
         class_names=class_names,
     )
-    x, y = load_generator_data(test_generator, step_test)
+    x, y = load_generator_data(test_generator, step_test, len(class_names))
 
     print("** load model **")
     model = get_model(class_names)

@@ -8,7 +8,7 @@ from keras.callbacks import Callback
 from sklearn.metrics import roc_auc_score
 
 
-def load_generator_data(generator, steps, class_num=14):
+def load_generator_data(generator, steps, class_num):
     """
     Return some data collected from a generator, use this to ensure all images
     are processed by exactly the same steps in the customized ImageDataGenerator.
@@ -73,7 +73,7 @@ class MultipleClassAUROC(Callback):
         y_hat shape: (#samples, len(class_names))
         y: [(#samples, 1), (#samples, 1) ... (#samples, 1)]
         """
-        x, y = load_generator_data(self.generator, self.steps)
+        x, y = load_generator_data(self.generator, self.steps, len(self.class_names))
         y_hat = self.model.predict(x)
 
         print(f"*** epoch#{epoch + 1} dev auroc ***")
