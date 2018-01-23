@@ -38,7 +38,7 @@ def custom_image_generator(generator, directory, class_names, batch_size=16, tar
 
 
 def label2vec(label, class_names):
-    vec = np.zeros(14)
+    vec = np.zeros(len(class_names))
     if label == "No Finding":
         return vec
     labels = label.split("|")
