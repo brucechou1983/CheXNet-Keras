@@ -21,9 +21,16 @@ ChexNet is a deep learning algorithm that can detect and localize 14 kinds of di
 5. Run `python train.py` to train a new model. If you want to run the training using multiple GPUs, just prepend `CUDA_VISIBLE_DEVICES=0,1,...` to restrict the GPU devices. `nvidia-smi` command will be helpful if you don't know which device are available.
 6. Run `python test.py` to test the model.
 
+## CAM
+Reference: [Grad-CAM](https://arxiv.org/pdf/1610.02391). CAM image is generated as accumumlated weighted activation before last global average pooling (GAP) layer. It is scaled up to 224\*224 to match original image.
+```
+python test_cam.py
+```
+CAM images will be generated into $pwd/imgdir, please make sure you've created the target directory before running test_cam.py
+
+Guided back-prop is still an enhancement item.
 ## TODO
-1. CAM
-2. More baseline models
+1. More baseline models
 
 ## Acknowledgement
 I would like to thank Pranav Rajpurkar (Stanford ML group) and Xinyu Weng (北京大學) for sharing their experiences on this task. Also I would like to thank Felix Yu for providing DenseNet-Keras source code.
