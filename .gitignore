@@ -6,3 +6,4 @@ densenet121_weights_tf.h5
 /experiments
 /data/Data_Entry_2017.csv
 venv
+config.ini
