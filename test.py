@@ -14,11 +14,12 @@ from models.densenet121 import get_model
 from utility import get_sample_counts
 
 
-def grad_cam(model, class_names, y, y_hat, test_generator):
+def grad_cam(model, class_names, y, y_hat, x_model, x_orig):
     print("** perform grad cam **")
-    y = np.array(y).squeeze()
-    y_hat = np.array(y_hat).squeeze()
+    y = np.swapaxes(np.array(y).squeeze(), 0, 1)
+    y_hat = np.swapaxes(np.array(y_hat).squeeze(), 0, 1)
     print(f"** Shapes of y/y_hat are {np.shape(y)}/{np.shape(y_hat)} **")
+    print(f"** Shapes of x_orig/x_model are {np.shape(x_orig)}/{np.shape(x_model)} **")
     os.makedirs("imgdir", exist_ok=True)
     with open('predicted_class.csv', 'w', newline='') as csvfile:
         csvwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
@@ -27,18 +28,19 @@ def grad_cam(model, class_names, y, y_hat, test_generator):
             csv_header.append(f"{v}_Prob")
         csvwriter.writerow(csv_header)
         for i, v in enumerate(y_hat):
+            print(f"** y_hat[{i}] = {v}")
+            print(f"** y[{i}] = {y[i]}")
             predicted_class = np.argmax(v)
-            labeled_class = np.argmax(y[i])
-            print(
-                f"** y_hat[{i}] = {v.round(3)} Label/Prediction: {class_names[labeled_class]}/{class_names[predicted_class]}")
+            labeled_classes = ",".join([class_names[yi] for yi, yiv in enumerate(y[i]) if yiv == 1])
+
+            print(f"** Label/Prediction: {labeled_classes}/{class_names[predicted_class]}")
             csv_row = [str(i + 1), f"{class_names[predicted_class]}"] + [str(vi.round(3)) for vi in v]
             csvwriter.writerow(csv_row)
-            x_orig = test_generator.orig_input(i).squeeze()
-            x_orig = cv2.cvtColor(x_orig, cv2.COLOR_GRAY2RGB)
-            x = test_generator.model_input(i)
-            cam = gc.grad_cam(model, x, x_orig, predicted_class, "conv5_blk_scale", class_names)
+            x_orig_i = 255*x_orig[i].squeeze()
+            x_model_i = x_model[i][np.newaxis, :, :, :]
+            cam = gc.grad_cam(model, x_model_i, x_orig_i, predicted_class, "conv5_blk_scale", class_names)
             font = cv2.FONT_HERSHEY_SIMPLEX
-            cv2.putText(x_orig, f"Labeled as:{class_names[labeled_class]}", (5, 20), font, 1,
+            cv2.putText(x_orig_i, f"Labeled as:{labeled_classes}", (5, 20), font, 1,
                         (255, 255, 255),
                         2, cv2.LINE_AA)
 
@@ -48,7 +50,7 @@ def grad_cam(model, class_names, y, y_hat, test_generator):
 
             print(f"Writing cam file to imgdir/gradcam_{i}.jpg")
 
-            cv2.imwrite(f"imgdir/gradcam_{i}.jpg", np.concatenate((x_orig, cam), axis=1))
+            cv2.imwrite(f"imgdir/gradcam_{i}.jpg", np.concatenate((x_orig_i, cam), axis=1))
 
 
 def main():
@@ -82,9 +84,15 @@ def main():
         ImageDataGenerator(horizontal_flip=True, rescale=1. / 255),
         test_data_path,
         batch_size=batch_size,
-        class_names=class_names,
+        class_names=class_names, cam=False
     )
+    test_generator_orig = custom_image_generator(
+        ImageDataGenerator(horizontal_flip=True, rescale=1. / 255),
+        test_data_path,
+        batch_size=batch_size,
+        class_names=class_names, cam=True)
     x, y = load_generator_data(test_generator, step_test, len(class_names))
+    x_orig, _ = load_generator_data(test_generator_orig, step_test, len(class_names))
 
     print("** load model **")
     model = get_model(class_names)
@@ -113,7 +121,7 @@ def main():
         f.write("-------------------------\n")
         f.write(f"mean auroc: {mean_auroc}\n")
 
-    grad_cam(model, class_names, y, y_hat, test_generator)
+    grad_cam(model, class_names, y, y_hat, x, x_orig)
 
 
 if __name__ == "__main__":
