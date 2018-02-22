@@ -5,3 +5,4 @@ densenet121_weights_tf.h5
 /.idea
 /experiments
 /data/Data_Entry_2017.csv
+venv
