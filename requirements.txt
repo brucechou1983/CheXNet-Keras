@@ -25,3 +25,4 @@ tensorflow-tensorboard==1.5.1
 termcolor==1.1.0
 webencodings==0.5.1
 Werkzeug==0.14.1
+opencv-python

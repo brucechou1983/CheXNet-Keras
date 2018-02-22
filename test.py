@@ -16,6 +16,7 @@ from utility import get_sample_counts
 
 def grad_cam(model, class_names, y, y_hat, test_generator):
     print("** perform grad cam **")
+    print(f"** Shapes of y/y_hat are {np.shape(y)}/{np.shape(y_hat)} **")
     os.makedirs("imgdir", exist_ok=True)
     with open('predicted_class.csv', 'w', newline='') as csvfile:
         csvwriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
