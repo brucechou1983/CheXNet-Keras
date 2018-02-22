@@ -41,13 +41,11 @@ def grad_cam(model, class_names, y, y_hat, x_model, x_orig):
             x_model_i = x_model[i][np.newaxis, :, :, :]
             cam = gc.grad_cam(model, x_model_i, x_orig_i, predicted_class, "conv5_blk_scale", class_names)
             font = cv2.FONT_HERSHEY_SIMPLEX
-            cv2.putText(x_orig_i, f"Labeled as:{labeled_classes}", (5, 20), font, 1,
-                        (255, 255, 255),
-                        2, cv2.LINE_AA)
+            cv2.putText(x_orig_i, f"Labeled as:{labeled_classes}", (5, 20), font, fontScale=0.5, color=(255, 255, 255),
+                        thickness=2, lineType=cv2.LINE_AA)
 
-            cv2.putText(cam, f"Predicted as:{class_names[predicted_class]}", (5, 20), font, 1,
-                        (255, 255, 255),
-                        2, cv2.LINE_AA)
+            cv2.putText(cam, f"Predicted as:{class_names[predicted_class]}", (5, 20), font, fontScale=0.5,
+                        color=(255, 255, 255), thickness=2, lineType=cv2.LINE_AA)
 
             print(f"Writing cam file to imgdir/gradcam_{i}.jpg")
 
