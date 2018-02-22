@@ -4,10 +4,10 @@ This project is a tool to build CheXNet-like models, written in Keras.
 <img width="450" height="450" src="https://stanfordmlgroup.github.io/projects/chexnet/img/chest-cam.png" alt="CheXNet from Stanford ML Group"/>
 
 ## System Requirements
-1. Tensorflow_GPU > 1.5
-2. Keras 2.1.4
+1. Tensorflow_GPU >= 1.4
+2. Keras >= 2.1.4
 3. numpy
-4. opencv-python (i.e. cv2)
+4. opencv-python (i.e. cv2) >=3.0
 5. At least one Nvidia 1080Ti GPU to enable batch_size = 32
  
 ## What is [CheXNet](https://arxiv.org/pdf/1711.05225.pdf)?
