@@ -26,6 +26,7 @@ def main():
     train_patient_count = cp["DEFAULT"].getint("train_patient_count")
     dev_patient_count = cp["DEFAULT"].getint("dev_patient_count")
     data_entry_file = cp["DEFAULT"].get("data_entry_file")
+    base_model_name = cp["DEFAULT"].get("base_model_name")
     class_names = cp["DEFAULT"].get("class_names").split(",")
 
     # train config
