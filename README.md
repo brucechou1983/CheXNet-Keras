@@ -4,11 +4,14 @@ This project is a tool to build CheXNet-like models, written in Keras.
 <img width="450" height="450" src="https://stanfordmlgroup.github.io/projects/chexnet/img/chest-cam.png" alt="CheXNet from Stanford ML Group"/>
 
 ## System Requirements
-1. Tensorflow_GPU >= 1.4
-2. Keras >= 2.1.4
+1. Tensorflow_GPU == 1.4 (CUDA 8)
+2. Keras == 2.1.4
 3. numpy
-4. opencv-python (i.e. cv2) >=3.0
+4. opencv-python (i.e. cv2) ==3.3
 5. At least one Nvidia 1080Ti GPU to enable batch_size = 32
+
+### Important notice on CUDA users
+If you use >= CUDA 9.1, please modify requirements.txt, such that tensorflow_gpu == 1.5
  
 ## What is [CheXNet](https://arxiv.org/pdf/1711.05225.pdf)?
 ChexNet is a deep learning algorithm that can detect and localize 14 kinds of diseases from chest X-ray images. As described in the paper, a 121-layer densely connected convolutional neural network is trained on ChestX-ray14 dataset, which contains 112,120 frontal view X-ray images from 30,805 unique patients. The result is so good that it surpasses the performance of practicing radiologists.
