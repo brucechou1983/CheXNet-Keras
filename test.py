@@ -32,11 +32,12 @@ def grad_cam(model, class_names, y, y_hat, x_model, x_orig):
             print(f"** y[{i}] = {y[i]}")
             predicted_class = np.argmax(v)
             labeled_classes = ",".join([class_names[yi] for yi, yiv in enumerate(y[i]) if yiv == 1])
-
+            if labeled_classes == "":
+                labeled_classes = "Normal"
             print(f"** Label/Prediction: {labeled_classes}/{class_names[predicted_class]}")
             csv_row = [str(i + 1), f"{class_names[predicted_class]}"] + [str(vi.round(3)) for vi in v]
             csvwriter.writerow(csv_row)
-            x_orig_i = 255*x_orig[i].squeeze()
+            x_orig_i = 255 * x_orig[i].squeeze()
             x_model_i = x_model[i][np.newaxis, :, :, :]
             cam = gc.grad_cam(model, x_model_i, x_orig_i, predicted_class, "conv5_blk_scale", class_names)
             font = cv2.FONT_HERSHEY_SIMPLEX
