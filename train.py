@@ -165,7 +165,7 @@ def main():
             train_data_path,
             batch_size=batch_size,
             class_names=class_names,
-            target_size=model_factory.get_input_shape(base_model_name),
+            target_size=model_factory.get_input_size(base_model_name),
         )
         dev_data_path = f"{output_dir}/{symlink_dir_name}/dev/"
         dev_generator = custom_image_generator(
@@ -173,7 +173,7 @@ def main():
             dev_data_path,
             batch_size=batch_size,
             class_names=class_names,
-            target_size=model_factory.get_input_shape(base_model_name),
+            target_size=model_factory.get_input_size(base_model_name),
         )
 
         output_weights_path = os.path.join(output_dir, output_weights_name)
