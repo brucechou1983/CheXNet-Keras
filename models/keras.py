@@ -13,36 +13,47 @@ class ModelFactory:
             VGG16=dict(
                 input_shape=(224, 224, 3),
                 module_name="vgg16",
+                last_conv_layer="block5_conv3",
             ),
             VGG19=dict(
                 input_shape=(224, 224, 3),
                 module_name="vgg19",
+                last_conv_layer="block5_conv4",
             ),
             DenseNet121=dict(
                 input_shape=(224, 224, 3),
                 module_name="densenet",
+                last_conv_layer="bn",
             ),
             ResNet50=dict(
                 input_shape=(224, 224, 3),
                 module_name="resnet50",
+                last_conv_layer="activation_49",
             ),
             InceptionV3=dict(
                 input_shape=(299, 299, 3),
                 module_name="inception_v3",
+                last_conv_layer="mixed10",
             ),
             InceptionResNetV2=dict(
                 input_shape=(299, 299, 3),
                 module_name="inception_resnet_v2",
+                last_conv_layer="conv_7b_ac",
             ),
             NASNetMobile=dict(
                 input_shape=(224, 224, 3),
                 module_name="nasnet",
+                last_conv_layer="activation_188",
             ),
             NASNetLarge=dict(
                 input_shape=(331, 331, 3),
                 module_name="nasnet",
+                last_conv_layer="activation_260",
             ),
         )
+
+    def get_last_conv_layer(self, model_name):
+        return self.models_[model_name]["last_conv_layer"]
 
     def get_input_size(self, model_name):
         return self.models_[model_name]["input_shape"][:2]
