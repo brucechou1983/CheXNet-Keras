@@ -52,6 +52,9 @@ class AugmentedImageGenerator(Sequence):
         if self.verbose > 0:
             print(f"generate batch_x (shape: {batch_x.shape})")
             print(f"generate batch_y (len: {len(batch_y)}, shape: {batch_y[0].shape})")
+
+        if self.augmenter is not None:
+            return self.augmenter.augment_images(batch_x), batch_y
         return batch_x, batch_y
 
     def _load_image(self, image_file):

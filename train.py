@@ -4,7 +4,7 @@ import os
 import pickle
 from callback import MultipleClassAUROC, MultiGPUModelCheckpoint
 from configparser import ConfigParser
-from generator import custom_image_generator
+from generator import AugmentedImageGenerator
 from keras.callbacks import ModelCheckpoint, TensorBoard, ReduceLROnPlateau
 from keras.optimizers import Adam
 from keras.preprocessing.image import ImageDataGenerator
@@ -42,12 +42,11 @@ def main():
     validation_steps = cp["TRAIN"].get("validation_steps")
     positive_weights_multiply = cp["TRAIN"].getfloat("positive_weights_multiply")
     use_class_balancing = cp["TRAIN"].getboolean("use_class_balancing")
-    use_default_split = cp["TRAIN"].getboolean("use_default_split")
+    dataset_csv_dir = cp["TRAIN"].get("dataset_csv_dir")
     # if previously trained weights is used, never re-split
     if use_trained_model_weights:
         # resuming mode
-        print("** use trained model weights, turn on use_skip_split automatically **")
-        use_skip_split = True
+        print("** use trained model weights **")
         # load training status for resuming
         training_stats_file = os.path.join(output_dir, ".training_stats.json")
         if os.path.isfile(training_stats_file):
@@ -57,7 +56,6 @@ def main():
             training_stats = {}
     else:
         # start over
-        use_skip_split = cp["TRAIN"].getboolean("use_skip_split ")
         training_stats = {}
 
     split_dataset_random_state = cp["TRAIN"].getint("split_dataset_random_state")
@@ -78,21 +76,9 @@ def main():
         print(f"backup config file to {output_dir}")
         shutil.copy(config_file, os.path.join(output_dir, os.path.split(config_file)[1]))
 
-        # split train/dev/test
-        if use_default_split:
-            datasets = ["train", "dev", "test"]
-            for dataset in datasets:
-                shutil.copy(f"./data/default_split/{dataset}.csv", output_dir)
-        elif not use_skip_split:
-            print("** split dataset **")
-            split_data(
-                data_entry_file,
-                class_names,
-                train_patient_count,
-                dev_patient_count,
-                output_dir,
-                split_dataset_random_state,
-            )
+        datasets = ["train", "dev", "test"]
+        for dataset in datasets:
+            shutil.copy(os.path.join(dataset_csv_dir, f"{dataset}.csv"), output_dir)
 
         # get train/dev sample counts
         train_counts, train_pos_counts = get_sample_counts(output_dir, "train", class_names)
@@ -154,26 +140,22 @@ def main():
         if show_model_summary:
             print(model.summary())
 
-        # recreate symlink folder for ImageDataGenerator
-        symlink_dir_name = "image_links"
-        create_symlink(image_source_dir, output_dir, symlink_dir_name)
-
         print("** create image generators **")
-        train_data_path = f"{output_dir}/{symlink_dir_name}/train/"
-        train_generator = custom_image_generator(
-            ImageDataGenerator(horizontal_flip=True, rescale=1./255),
-            train_data_path,
-            batch_size=batch_size,
+        train_generator = AugmentedImageGenerator(
+            dataset_csv_file=os.path.join(output_dir, "train.csv"),
             class_names=class_names,
+            source_image_dir=image_source_dir,
+            batch_size=batch_size,
             target_size=model_factory.get_input_size(base_model_name),
+            augmenter=None,
         )
-        dev_data_path = f"{output_dir}/{symlink_dir_name}/dev/"
-        dev_generator = custom_image_generator(
-            ImageDataGenerator(horizontal_flip=True, rescale=1./255),
-            dev_data_path,
-            batch_size=batch_size,
+        dev_generator = AugmentedImageGenerator(
+            dataset_csv_file=os.path.join(output_dir, "dev.csv"),
             class_names=class_names,
+            source_image_dir=image_source_dir,
+            batch_size=batch_size,
             target_size=model_factory.get_input_size(base_model_name),
+            augmenter=None,
         )
 
         output_weights_path = os.path.join(output_dir, output_weights_name)
@@ -225,6 +207,7 @@ def main():
             callbacks=callbacks,
             class_weight=class_weights,
             use_multiprocessing=True,
+            workers=2,
         )
 
         # dump history
