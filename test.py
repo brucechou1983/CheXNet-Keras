@@ -10,11 +10,11 @@ from sklearn.metrics import roc_auc_score
 import grad_cam as gc
 from callback import load_generator_data
 from generator import custom_image_generator
-from models.densenet121 import get_model
+from models.keras import ModelFactory
 from utility import get_sample_counts
 
 
-def grad_cam(model, class_names, y, y_hat, x_model, x_orig):
+def grad_cam(model, class_names, y, y_hat, x_model, x_orig, last_conv_layer):
     print("** perform grad cam **")
     y = np.swapaxes(np.array(y).squeeze(), 0, 1)
     y_hat = np.swapaxes(np.array(y_hat).squeeze(), 0, 1)
@@ -39,7 +39,8 @@ def grad_cam(model, class_names, y, y_hat, x_model, x_orig):
             csvwriter.writerow(csv_row)
             x_orig_i = 255 * x_orig[i].squeeze()
             x_model_i = x_model[i][np.newaxis, :, :, :]
-            cam = gc.grad_cam(model, x_model_i, x_orig_i, predicted_class, "conv5_blk_scale", class_names)
+            cam = gc.grad_cam(model, x_model_i, x_orig_i, predicted_class, last_conv_layer,
+                              class_names)
             font = cv2.FONT_HERSHEY_SIMPLEX
             cv2.putText(x_orig_i, f"Labeled as:{labeled_classes}", (5, 20), font, fontScale=0.5, color=(255, 255, 255),
                         thickness=2, lineType=cv2.LINE_AA)
@@ -60,6 +61,7 @@ def main():
 
     # default config
     output_dir = cp["DEFAULT"].get("output_dir")
+    base_model_name = cp["DEFAULT"].get("base_model_name")
     class_names = cp["DEFAULT"].get("class_names").split(",")
 
     # test config
@@ -78,29 +80,40 @@ def main():
     test_data_path = f"{output_dir}/{symlink_dir_name}/test/"
 
     step_test = int(test_counts / batch_size)
+
+    print("** load model **")
+    if use_best_weights:
+        print("** use best weights **")
+        model_weights_path = best_weights_path
+    else:
+        print("** use last weights **")
+        model_weights_path = weights_path
+    model_factory = ModelFactory()
+    model = model_factory.get_model(
+        class_names,
+        model_name=base_model_name,
+        use_base_weights=False,
+        weights_path=model_weights_path)
+
     print("** load test generator **")
     test_generator = custom_image_generator(
         ImageDataGenerator(horizontal_flip=True, rescale=1. / 255),
         test_data_path,
         batch_size=batch_size,
-        class_names=class_names, cam=False
+        class_names=class_names,
+        cam=False,
+        target_size=model_factory.get_input_size(base_model_name),
     )
     test_generator_orig = custom_image_generator(
         ImageDataGenerator(horizontal_flip=True, rescale=1. / 255),
         test_data_path,
         batch_size=batch_size,
-        class_names=class_names, cam=True)
+        class_names=class_names,
+        cam=True,
+        target_size=model_factory.get_input_size(base_model_name),
+    )
     x, y = load_generator_data(test_generator, step_test, len(class_names))
     x_orig, _ = load_generator_data(test_generator_orig, step_test, len(class_names))
-
-    print("** load model **")
-    model = get_model(class_names)
-    if use_best_weights:
-        print("** use best weights **")
-        model.load_weights(best_weights_path)
-    else:
-        print("** use last weights **")
-        model.load_weights(weights_path)
 
     print("** make prediction **")
     y_hat = model.predict(x, verbose=1)
@@ -120,7 +133,7 @@ def main():
         f.write("-------------------------\n")
         f.write(f"mean auroc: {mean_auroc}\n")
 
-    grad_cam(model, class_names, y, y_hat, x, x_orig)
+    grad_cam(model, class_names, y, y_hat, x, x_orig, model_factory.get_last_conv_layer())
 
 
 if __name__ == "__main__":

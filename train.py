@@ -9,7 +9,7 @@ from keras.callbacks import ModelCheckpoint, TensorBoard, ReduceLROnPlateau
 from keras.optimizers import Adam
 from keras.preprocessing.image import ImageDataGenerator
 from keras.utils import multi_gpu_model
-from models.densenet121 import get_model
+from models.keras import ModelFactory
 from utility import split_data, get_sample_counts, create_symlink
 from weights import get_class_weights
 
@@ -26,6 +26,7 @@ def main():
     train_patient_count = cp["DEFAULT"].getint("train_patient_count")
     dev_patient_count = cp["DEFAULT"].getint("dev_patient_count")
     data_entry_file = cp["DEFAULT"].get("data_entry_file")
+    base_model_name = cp["DEFAULT"].get("base_model_name")
     class_names = cp["DEFAULT"].get("class_names").split(",")
 
     # train config
@@ -135,10 +136,6 @@ def main():
             print(f"  {c}: {w}")
 
         print("** load model **")
-        if use_base_model_weights:
-            base_model_weights_file = cp["TRAIN"].get("base_model_weights_file")
-        else:
-            base_model_weights_file = None
         if use_trained_model_weights:
             if use_best_weights:
                 model_weights_file = os.path.join(output_dir, f"best_{output_weights_name}")
@@ -146,7 +143,14 @@ def main():
                 model_weights_file = os.path.join(output_dir, output_weights_name)
         else:
             model_weights_file = None
-        model = get_model(class_names, base_model_weights_file, model_weights_file)
+
+        model_factory = ModelFactory()
+        model = model_factory.get_model(
+            class_names,
+            model_name=base_model_name,
+            use_base_weights=use_base_model_weights,
+            weights_path=model_weights_file)
+
         if show_model_summary:
             print(model.summary())
 
@@ -161,6 +165,7 @@ def main():
             train_data_path,
             batch_size=batch_size,
             class_names=class_names,
+            target_size=model_factory.get_input_size(base_model_name),
         )
         dev_data_path = f"{output_dir}/{symlink_dir_name}/dev/"
         dev_generator = custom_image_generator(
@@ -168,6 +173,7 @@ def main():
             dev_data_path,
             batch_size=batch_size,
             class_names=class_names,
+            target_size=model_factory.get_input_size(base_model_name),
         )
 
         output_weights_path = os.path.join(output_dir, output_weights_name)
@@ -185,7 +191,12 @@ def main():
             )
         else:
             model_train = model
-            checkpoint = ModelCheckpoint(output_weights_path)
+            checkpoint = ModelCheckpoint(
+                 output_weights_path,
+                 save_weights_only=True,
+                 save_best_only=True,
+                 verbose=1,
+            )
 
         print("** compile model with class weights **")
         optimizer = Adam(lr=initial_learning_rate)
@@ -204,7 +215,7 @@ def main():
             auroc,
         ]
 
-        print("** training start **")
+        print("** start training **")
         history = model_train.fit_generator(
             generator=train_generator,
             steps_per_epoch=train_steps,
@@ -213,6 +224,7 @@ def main():
             validation_steps=validation_steps,
             callbacks=callbacks,
             class_weight=class_weights,
+            use_multiprocessing=True,
         )
 
         # dump history
