@@ -14,7 +14,7 @@ class AugmentedImageGenerator(Sequence):
     """
 
     def __init__(self, dataset_csv_file, class_names, source_image_dir, batch_size=16,
-                 target_size=(224, 224), augmenter=None):
+                 target_size=(224, 224), augmenter=None, verbose=0):
         """
         :param dataset_csv_file: str, path of dataset csv file
         :param class_names: list of str
@@ -22,6 +22,7 @@ class AugmentedImageGenerator(Sequence):
         :param target_size: tuple(int, int)
         :param augmenter: imgaug object. Do not specify resize in augmenter.
                           It will be done automatically according to input_shape of the model.
+        :param verbose: int
         """
         dataset_df = pd.read_csv(dataset_csv_file)
         dataset_df = dataset_df.sample(frac=1.)
@@ -30,6 +31,7 @@ class AugmentedImageGenerator(Sequence):
         self.batch_size = batch_size
         self.target_size = target_size
         self.augmenter = augmenter
+        self.verbose = verbose
 
     def __len__(self):
         return np.ceil(len(self.x_path) / float(self.batch_size))
@@ -38,6 +40,9 @@ class AugmentedImageGenerator(Sequence):
         batch_x_path = self.x_path[idx * self.batch_size:(idx + 1) * self.batch_size]
         batch_x = np.asarray([self._load_image(x_path) for x_path in batch_x_path])
         batch_y = self.y[idx * self.batch_size:(idx + 1) * self.batch_size]
+        if self.verbose > 0:
+            print(f"generate batch_x (shape: {batch_x.shape})")
+            print(f"generate batch_y (shape: {batch_y.shape})")
         return batch_x, batch_y
 
     def _load_image(self, image_file):
