@@ -12,6 +12,7 @@ from keras.utils import multi_gpu_model
 from models.keras import ModelFactory
 from utility import split_data, get_sample_counts, create_symlink
 from weights import get_class_weights
+from augmenter import augmenter
 
 
 def main():
@@ -147,7 +148,7 @@ def main():
             source_image_dir=image_source_dir,
             batch_size=batch_size,
             target_size=model_factory.get_input_size(base_model_name),
-            augmenter=None,
+            augmenter=augmenter,
         )
         dev_generator = AugmentedImageGenerator(
             dataset_csv_file=os.path.join(output_dir, "dev.csv"),
@@ -155,7 +156,7 @@ def main():
             source_image_dir=image_source_dir,
             batch_size=batch_size,
             target_size=model_factory.get_input_size(base_model_name),
-            augmenter=None,
+            augmenter=augmenter,
         )
 
         output_weights_path = os.path.join(output_dir, output_weights_name)
