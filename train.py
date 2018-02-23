@@ -191,7 +191,12 @@ def main():
             )
         else:
             model_train = model
-            checkpoint = ModelCheckpoint(output_weights_path)
+            checkpoint = ModelCheckpoint(
+                 output_weights_path,
+                 save_weights_only=True,
+                 save_best_only=True,
+                 verbose=1,
+            )
 
         print("** compile model with class weights **")
         optimizer = Adam(lr=initial_learning_rate)
