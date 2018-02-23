@@ -14,7 +14,7 @@ from models.keras import ModelFactory
 from utility import get_sample_counts
 
 
-def grad_cam(model, class_names, y, y_hat, x_model, x_orig, last_conv_layer="conv5_blk_scale"):
+def grad_cam(model, class_names, y, y_hat, x_model, x_orig, last_conv_layer):
     print("** perform grad cam **")
     y = np.swapaxes(np.array(y).squeeze(), 0, 1)
     y_hat = np.swapaxes(np.array(y_hat).squeeze(), 0, 1)
