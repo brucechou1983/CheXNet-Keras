@@ -34,7 +34,7 @@ class AugmentedImageGenerator(Sequence):
         self.verbose = verbose
 
     def __len__(self):
-        return np.ceil(len(self.x_path) / float(self.batch_size))
+        return int(np.ceil(len(self.x_path) / float(self.batch_size)))
 
     def __getitem__(self, idx):
         batch_x_path = self.x_path[idx * self.batch_size:(idx + 1) * self.batch_size]
