@@ -7,10 +7,9 @@ from configparser import ConfigParser
 from generator import AugmentedImageGenerator
 from keras.callbacks import ModelCheckpoint, TensorBoard, ReduceLROnPlateau
 from keras.optimizers import Adam
-from keras.preprocessing.image import ImageDataGenerator
 from keras.utils import multi_gpu_model
 from models.keras import ModelFactory
-from utility import split_data, get_sample_counts, create_symlink
+from utility import get_sample_counts
 from weights import get_class_weights
 from augmenter import augmenter
 
