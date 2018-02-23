@@ -43,6 +43,7 @@ class AugmentedImageGenerator(Sequence):
         batch_x_path = self.x_path[idx * self.batch_size:(idx + 1) * self.batch_size]
         batch_x = np.asarray([self._load_image(x_path) for x_path in batch_x_path])
         batch_y = self.y[idx * self.batch_size:(idx + 1) * self.batch_size]
+        batch_y = [np.array(y) for y in batch_y.T.tolist()]
 
         imagenet_mean = np.array([0.485, 0.456, 0.406])
         imagenet_std = np.array([0.229, 0.224, 0.225])
@@ -50,7 +51,7 @@ class AugmentedImageGenerator(Sequence):
 
         if self.verbose > 0:
             print(f"generate batch_x (shape: {batch_x.shape})")
-            print(f"generate batch_y (shape: {batch_y.shape})")
+            print(f"generate batch_y (len: {len(batch_y)}, shape: {batch_y[0].shape})")
         return batch_x, batch_y
 
     def _load_image(self, image_file):
