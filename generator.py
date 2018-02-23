@@ -33,6 +33,9 @@ class AugmentedImageGenerator(Sequence):
         self.augmenter = augmenter
         self.verbose = verbose
 
+    def __bool__(self):
+        return True
+
     def __len__(self):
         return int(np.ceil(len(self.x_path) / float(self.batch_size)))
 
