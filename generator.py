@@ -1,50 +1,50 @@
 import numpy as np
+import os
+import pandas as pd
+from keras.utils import Sequence
+from PIL import Image
+from skimage.transform import resize
 
 
-def custom_image_generator(generator, directory, class_names, batch_size=16, target_size=(224, 224),
-                           color_mode="rgb", class_mode="binary", mean=None, std=None, cam=False):
+class AugmentedImageGenerator(Sequence):
     """
-    In paper chap 3.1:
+    Thread-safe image generator with imgaug support
 
-    we downscale the images to 224x224 and normalize based
-    on the mean and standard deviation of images in the
-    ImageNet training set
+    For more information of imgaug see: https://github.com/aleju/imgaug
     """
 
-    if mean is None:
-        mean = np.array([0.485, 0.456, 0.406])
-    if std is None:
-        std = np.array([0.229, 0.224, 0.225])
+    def __init__(self, dataset_csv_file, class_names, source_image_dir, batch_size=16,
+                 target_size=(224, 224), augmenter=None):
+        """
+        :param dataset_csv_file: str, path of dataset csv file
+        :param class_names: list of str
+        :param batch_size: int
+        :param target_size: tuple(int, int)
+        :param augmenter: imgaug object. Do not specify resize in augmenter.
+                          It will be done automatically according to input_shape of the model.
+        """
+        dataset_df = pd.read_csv(dataset_csv_file)
+        dataset_df = dataset_df.sample(frac=1.)
+        self.x_path, self.y = dataset_df["Image Index"].as_matrix(), dataset_df[class_names].as_matrix()
+        self.source_image_dir = source_image_dir
+        self.batch_size = batch_size
+        self.target_size = target_size
+        self.augmenter = augmenter
 
-    iterator = generator.flow_from_directory(directory=directory,
-                                             target_size=target_size,
-                                             color_mode=color_mode,
-                                             class_mode=class_mode,
-                                             batch_size=batch_size)
-    # class index -> xxxx|xxxx
-    class_indices_reversed = dict((v, k) for k, v in iterator.class_indices.items())
+    def __len__(self):
+        return np.ceil(len(self.x_path) / float(self.batch_size))
 
-    for batch_x, batch_y in iterator:
-        batch_y_multilabel = []
-        for i in range(batch_y.shape[0]):
-            # class index -> xxxx|xxxx -> one hot
-            batch_y_multilabel.append(
-                label2vec(class_indices_reversed[batch_y[i]], class_names))
+    def __getitem__(self, idx):
+        batch_x_path = self.x[idx * self.batch_size:(idx + 1) * self.batch_size]
+        v_load_image = np.vectorize(self._load_image)
+        batch_x = v_load_image(batch_x_path)
+        batch_y = self.y[idx * self.batch_size:(idx + 1) * self.batch_size]
+        return batch_x, batch_y
 
-        # now shape is (batch#, 14)
-        batch_y_multilabel = np.array(batch_y_multilabel)
-        # make the output [y1, y2, y3 ... y14] where yx shape is (batch#, 1)
-        if not cam:
-            yield (batch_x - mean) / std, [np.array(y) for y in batch_y_multilabel.T.tolist()]
-        else:  # no normalization
-            yield batch_x, [np.array(y) for y in batch_y_multilabel.T.tolist()]
-
-
-def label2vec(label, class_names):
-    vec = np.zeros(len(class_names))
-    if label == "No Finding":
-        return vec
-    labels = label.split("|")
-    for l in labels:
-        vec[class_names.index(l)] = 1
-    return vec
+    def _load_image(self, image_file):
+        image_path = os.path.join(self.source_image_dir, image_file)
+        image = Image.open(image_path)
+        image_array = np.asarray(image.convert("RGB"))
+        image_array = image_array / 255.
+        image_array = resize(image_array, self.target_size)
+        return image_array
