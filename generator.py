@@ -35,9 +35,8 @@ class AugmentedImageGenerator(Sequence):
         return np.ceil(len(self.x_path) / float(self.batch_size))
 
     def __getitem__(self, idx):
-        batch_x_path = self.x[idx * self.batch_size:(idx + 1) * self.batch_size]
-        v_load_image = np.vectorize(self._load_image)
-        batch_x = v_load_image(batch_x_path)
+        batch_x_path = self.x_path[idx * self.batch_size:(idx + 1) * self.batch_size]
+        batch_x = np.asarray([self._load_image(x_path) for x_path in batch_x_path])
         batch_y = self.y[idx * self.batch_size:(idx + 1) * self.batch_size]
         return batch_x, batch_y
 
