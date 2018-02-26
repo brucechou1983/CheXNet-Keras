@@ -31,12 +31,13 @@ class AugmentedImageSequence(Sequence):
         self.target_size = target_size
         self.augmenter = augmenter
         self.verbose = verbose
+        self.steps = int(np.ceil(len(self.x_path) / float(self.batch_size)))
 
     def __bool__(self):
         return True
 
     def __len__(self):
-        return int(np.ceil(len(self.x_path) / float(self.batch_size)))
+        return self.steps
 
     def __getitem__(self, idx):
         batch_x_path = self.x_path[idx * self.batch_size:(idx + 1) * self.batch_size]
@@ -63,3 +64,11 @@ class AugmentedImageSequence(Sequence):
         image_array = image_array / 255.
         image_array = resize(image_array, self.target_size)
         return image_array
+
+    def get_y_true(self):
+        """
+        Use this function to get y_true for predict_generator
+
+        """
+        y_true = self.y[:self.steps*self.batch_size, :]
+        return [np.array(y) for y in y_true.T.tolist()]
