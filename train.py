@@ -145,6 +145,7 @@ def main():
             batch_size=batch_size,
             target_size=model_factory.get_input_size(base_model_name),
             augmenter=augmenter,
+            steps=train_steps,
         )
         validation_sequence = AugmentedImageSequence(
             dataset_csv_file=os.path.join(output_dir, "dev.csv"),
@@ -153,6 +154,7 @@ def main():
             batch_size=batch_size,
             target_size=model_factory.get_input_size(base_model_name),
             augmenter=augmenter,
+            steps=validation_steps,
         )
 
         output_weights_path = os.path.join(output_dir, output_weights_name)

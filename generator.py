@@ -14,7 +14,7 @@ class AugmentedImageSequence(Sequence):
     """
 
     def __init__(self, dataset_csv_file, class_names, source_image_dir, batch_size=16,
-                 target_size=(224, 224), augmenter=None, verbose=0):
+                 target_size=(224, 224), augmenter=None, verbose=0, steps=None):
         """
         :param dataset_csv_file: str, path of dataset csv file
         :param class_names: list of str
@@ -31,7 +31,10 @@ class AugmentedImageSequence(Sequence):
         self.target_size = target_size
         self.augmenter = augmenter
         self.verbose = verbose
-        self.steps = int(np.ceil(len(self.x_path) / float(self.batch_size)))
+        if steps is None:
+            self.steps = int(np.ceil(len(self.x_path) / float(self.batch_size)))
+        else:
+            self.steps = int(steps)
 
     def __bool__(self):
         return True
