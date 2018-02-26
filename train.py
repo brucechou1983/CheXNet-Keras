@@ -187,6 +187,7 @@ def main():
             class_names=class_names,
             weights_path=output_weights_path,
             stats=training_stats,
+            workers=generator_workers,
         )
         callbacks = [
             checkpoint,

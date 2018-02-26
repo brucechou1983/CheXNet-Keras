@@ -12,9 +12,10 @@ class MultipleClassAUROC(Callback):
     """
     Monitor mean AUROC and update model
     """
-    def __init__(self, sequence, class_names, weights_path, stats=None):
+    def __init__(self, sequence, class_names, weights_path, stats=None, workers=1):
         super(Callback, self).__init__()
         self.sequence = sequence
+        self.workers = workers
         self.class_names = class_names
         self.weights_path = weights_path
         self.best_weights_path = os.path.join(
@@ -54,7 +55,7 @@ class MultipleClassAUROC(Callback):
         y_hat shape: (#samples, len(class_names))
         y: [(#samples, 1), (#samples, 1) ... (#samples, 1)]
         """
-        y_hat = self.model.predict_generator(self.sequence)
+        y_hat = self.model.predict_generator(self.sequence, workers=self.workers)
         y = self.sequence.get_y_true()
 
         print(f"*** epoch#{epoch + 1} dev auroc ***")
