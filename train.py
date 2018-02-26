@@ -206,7 +206,6 @@ def main():
             validation_steps=validation_steps,
             callbacks=callbacks,
             class_weight=class_weights,
-            use_multiprocessing=True,
             workers=2,
         )
 
