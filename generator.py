@@ -6,7 +6,7 @@ from PIL import Image
 from skimage.transform import resize
 
 
-class AugmentedImageGenerator(Sequence):
+class AugmentedImageSequence(Sequence):
     """
     Thread-safe image generator with imgaug support
 

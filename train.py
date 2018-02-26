@@ -4,7 +4,7 @@ import os
 import pickle
 from callback import MultipleClassAUROC, MultiGPUModelCheckpoint
 from configparser import ConfigParser
-from generator import AugmentedImageGenerator
+from generator import AugmentedImageSequence
 from keras.callbacks import ModelCheckpoint, TensorBoard, ReduceLROnPlateau
 from keras.optimizers import Adam
 from keras.utils import multi_gpu_model
@@ -141,7 +141,7 @@ def main():
             print(model.summary())
 
         print("** create image generators **")
-        train_generator = AugmentedImageGenerator(
+        train_sequence = AugmentedImageSequence(
             dataset_csv_file=os.path.join(output_dir, "train.csv"),
             class_names=class_names,
             source_image_dir=image_source_dir,
@@ -149,7 +149,7 @@ def main():
             target_size=model_factory.get_input_size(base_model_name),
             augmenter=augmenter,
         )
-        dev_generator = AugmentedImageGenerator(
+        validation_sequence = AugmentedImageSequence(
             dataset_csv_file=os.path.join(output_dir, "dev.csv"),
             class_names=class_names,
             source_image_dir=image_source_dir,
@@ -199,10 +199,10 @@ def main():
 
         print("** start training **")
         history = model_train.fit_generator(
-            generator=train_generator,
+            generator=train_sequence,
             steps_per_epoch=train_steps,
             epochs=epochs,
-            validation_data=dev_generator,
+            validation_data=validation_sequence,
             validation_steps=validation_steps,
             callbacks=callbacks,
             class_weight=class_weights,
