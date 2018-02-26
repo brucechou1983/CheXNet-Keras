@@ -25,7 +25,6 @@ class AugmentedImageGenerator(Sequence):
         :param verbose: int
         """
         dataset_df = pd.read_csv(dataset_csv_file)
-        dataset_df = dataset_df.sample(frac=1.)
         self.x_path, self.y = dataset_df["Image Index"].as_matrix(), dataset_df[class_names].as_matrix()
         self.source_image_dir = source_image_dir
         self.batch_size = batch_size
