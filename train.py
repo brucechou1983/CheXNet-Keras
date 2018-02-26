@@ -185,8 +185,7 @@ def main():
         optimizer = Adam(lr=initial_learning_rate)
         model_train.compile(optimizer=optimizer, loss="binary_crossentropy")
         auroc = MultipleClassAUROC(
-            generator=dev_generator,
-            steps=validation_steps,
+            sequence=validation_sequence,
             class_names=class_names,
             weights_path=output_weights_path,
             stats=training_stats,
