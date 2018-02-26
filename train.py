@@ -37,6 +37,7 @@ def main():
     epochs = cp["TRAIN"].getint("epochs")
     batch_size = cp["TRAIN"].getint("batch_size")
     initial_learning_rate = cp["TRAIN"].getfloat("initial_learning_rate")
+    generator_workers = cp["TRAIN"].getint("generator_workers")
     train_steps = cp["TRAIN"].get("train_steps")
     patience_reduce_lr = cp["TRAIN"].getint("patience_reduce_lr")
     validation_steps = cp["TRAIN"].get("validation_steps")
@@ -206,7 +207,7 @@ def main():
             validation_steps=validation_steps,
             callbacks=callbacks,
             class_weight=class_weights,
-            workers=2,
+            workers=generator_workers,
         )
 
         # dump history
