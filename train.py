@@ -38,6 +38,7 @@ def main():
     image_dimension = cp["TRAIN"].getint("image_dimension")
     train_steps = cp["TRAIN"].get("train_steps")
     patience_reduce_lr = cp["TRAIN"].getint("patience_reduce_lr")
+    min_lr = cp["TRAIN"].getfloat("min_lr")
     validation_steps = cp["TRAIN"].get("validation_steps")
     positive_weights_multiply = cp["TRAIN"].getfloat("positive_weights_multiply")
     use_class_balancing = cp["TRAIN"].getboolean("use_class_balancing")
@@ -195,7 +196,8 @@ def main():
         callbacks = [
             checkpoint,
             TensorBoard(log_dir=os.path.join(output_dir, "logs"), batch_size=batch_size),
-            ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=patience_reduce_lr, verbose=1),
+            ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=patience_reduce_lr, verbose=1,
+                mode="min", min_lr=min_lr),
             auroc,
         ]
 
