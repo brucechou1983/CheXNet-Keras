@@ -78,10 +78,10 @@ class ModelFactory:
             weights=base_weights,
             pooling="avg")
         x = base_model.output
+        x = Dense(1024)(x)
         predictions = []
         for i, class_name in enumerate(class_names):
-            prediction = Dense(1024)(x)
-            prediction = Dense(1, activation="sigmoid", name=class_name)(prediction)
+            prediction = Dense(1, activation="sigmoid", name=class_name)(x)
             predictions.append(prediction)
         model = Model(inputs=base_model.input, outputs=predictions)
 
