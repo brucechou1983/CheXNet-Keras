@@ -155,6 +155,7 @@ def main():
             target_size=model_factory.get_input_size(base_model_name),
             augmenter=augmenter,
             steps=validation_steps,
+            shuffle_on_epoch_end=False,
         )
 
         output_weights_path = os.path.join(output_dir, output_weights_name)
@@ -206,6 +207,7 @@ def main():
             callbacks=callbacks,
             class_weight=class_weights,
             workers=generator_workers,
+            shuffle=False,
         )
 
         # dump history
