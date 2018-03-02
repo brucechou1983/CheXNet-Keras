@@ -1,16 +1,12 @@
 import csv
+import cv2
+import grad_cam as gc
+import numpy as np
 import os
 from configparser import ConfigParser
-
-import cv2
-import numpy as np
-from keras.preprocessing.image import ImageDataGenerator
-from sklearn.metrics import roc_auc_score
-
-import grad_cam as gc
-from callback import load_generator_data
-from generator import custom_image_generator
+from generator import AugmentedImageSequence
 from models.keras import ModelFactory
+from sklearn.metrics import roc_auc_score
 from utility import get_sample_counts
 
 
@@ -63,9 +59,14 @@ def main():
     output_dir = cp["DEFAULT"].get("output_dir")
     base_model_name = cp["DEFAULT"].get("base_model_name")
     class_names = cp["DEFAULT"].get("class_names").split(",")
+    image_source_dir = cp["DEFAULT"].get("image_source_dir")
+
+    # train config
+    image_dimension = cp["TRAIN"].getint("image_dimension")
 
     # test config
     batch_size = cp["TEST"].getint("batch_size")
+    test_steps = cp["TEST"].get("test_steps")
     use_best_weights = cp["TEST"].getboolean("use_best_weights")
 
     # parse weights file path
@@ -76,10 +77,18 @@ def main():
     # get test sample count
     test_counts, _ = get_sample_counts(output_dir, "test", class_names)
 
-    symlink_dir_name = "image_links"
-    test_data_path = f"{output_dir}/{symlink_dir_name}/test/"
-
-    step_test = int(test_counts / batch_size)
+    # compute steps
+    if test_steps == "auto":
+        test_steps = int(test_counts / batch_size)
+    else:
+        try:
+            test_steps = int(test_steps)
+        except ValueError:
+            raise ValueError(f"""
+                test_steps: {test_steps} is invalid,
+                please use 'auto' or integer.
+                """)
+    print(f"** test_steps: {test_steps} **")
 
     print("** load model **")
     if use_best_weights:
@@ -96,27 +105,20 @@ def main():
         weights_path=model_weights_path)
 
     print("** load test generator **")
-    test_generator = custom_image_generator(
-        ImageDataGenerator(horizontal_flip=True, rescale=1. / 255),
-        test_data_path,
-        batch_size=batch_size,
+    test_sequence = AugmentedImageSequence(
+        dataset_csv_file=os.path.join(output_dir, "dev.csv"),
         class_names=class_names,
-        cam=False,
-        target_size=model_factory.get_input_size(base_model_name),
-    )
-    test_generator_orig = custom_image_generator(
-        ImageDataGenerator(horizontal_flip=True, rescale=1. / 255),
-        test_data_path,
+        source_image_dir=image_source_dir,
         batch_size=batch_size,
-        class_names=class_names,
-        cam=True,
-        target_size=model_factory.get_input_size(base_model_name),
+        target_size=(image_dimension, image_dimension),
+        augmenter=None,
+        steps=test_steps,
+        shuffle_on_epoch_end=False,
     )
-    x, y = load_generator_data(test_generator, step_test, len(class_names))
-    x_orig, _ = load_generator_data(test_generator_orig, step_test, len(class_names))
 
     print("** make prediction **")
-    y_hat = model.predict(x, verbose=1)
+    y_hat = model.predict_generator(test_sequence, verbose=1)
+    y = test_sequence.get_y_true()
 
     test_log_path = os.path.join(output_dir, "test.log")
     print(f"** write log to {test_log_path} **")
@@ -132,8 +134,7 @@ def main():
         mean_auroc = np.mean(aurocs)
         f.write("-------------------------\n")
         f.write(f"mean auroc: {mean_auroc}\n")
-
-    grad_cam(model, class_names, y, y_hat, x, x_orig, model_factory.get_last_conv_layer())
+        print(f"mean auroc: {mean_auroc}")
 
 
 if __name__ == "__main__":

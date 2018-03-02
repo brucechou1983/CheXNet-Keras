@@ -72,8 +72,13 @@ class AugmentedImageSequence(Sequence):
     def get_y_true(self):
         """
         Use this function to get y_true for predict_generator
+        In order to get correct y, you have to set shuffle_on_epoch_end=False.
 
         """
+        if self.shuffle:
+            raise ValueError("""
+            You're trying run get_y_true() when generator option 'shuffle_on_epoch_end' is True.
+            """)
         y_true = self.y[:self.steps*self.batch_size, :]
         return [np.array(y) for y in y_true.T.tolist()]
 
