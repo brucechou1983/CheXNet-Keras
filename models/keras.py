@@ -1,4 +1,5 @@
 import importlib
+from keras.layers import Input
 from keras.layers.core import Dense
 from keras.models import Model
 
@@ -59,7 +60,7 @@ class ModelFactory:
         return self.models_[model_name]["input_shape"][:2]
 
     def get_model(self, class_names, model_name="DenseNet121", use_base_weights=True,
-                  weights_path=None):
+                  weights_path=None, input_shape=None):
 
         if use_base_weights is True:
             base_weights = "imagenet"
@@ -72,9 +73,15 @@ class ModelFactory:
             ),
             model_name)
 
+        if input_shape is None:
+            input_shape = self.models_[model_name]["input_shape"]
+
+        img_input = Input(shape=input_shape)
+
         base_model = base_model_class(
             include_top=False,
-            input_shape=self.models_[model_name]["input_shape"],
+            input_tensor=img_input,
+            input_shape=input_shape,
             weights=base_weights,
             pooling="avg")
         x = base_model.output
@@ -83,7 +90,7 @@ class ModelFactory:
         for i, class_name in enumerate(class_names):
             prediction = Dense(1, activation="sigmoid", name=class_name)(x)
             predictions.append(prediction)
-        model = Model(inputs=base_model.input, outputs=predictions)
+        model = Model(inputs=img_input, outputs=predictions)
 
         if weights_path == "":
             weights_path = None

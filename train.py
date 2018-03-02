@@ -35,6 +35,7 @@ def main():
     batch_size = cp["TRAIN"].getint("batch_size")
     initial_learning_rate = cp["TRAIN"].getfloat("initial_learning_rate")
     generator_workers = cp["TRAIN"].getint("generator_workers")
+    image_dimension = cp["TRAIN"].getint("image_dimension")
     train_steps = cp["TRAIN"].get("train_steps")
     patience_reduce_lr = cp["TRAIN"].getint("patience_reduce_lr")
     validation_steps = cp["TRAIN"].get("validation_steps")
@@ -132,7 +133,8 @@ def main():
             class_names,
             model_name=base_model_name,
             use_base_weights=use_base_model_weights,
-            weights_path=model_weights_file)
+            weights_path=model_weights_file,
+            input_shape=(image_dimension, image_dimension, 3))
 
         if show_model_summary:
             print(model.summary())
@@ -143,7 +145,7 @@ def main():
             class_names=class_names,
             source_image_dir=image_source_dir,
             batch_size=batch_size,
-            target_size=model_factory.get_input_size(base_model_name),
+            target_size=(image_dimension, image_dimension),
             augmenter=augmenter,
             steps=train_steps,
         )
@@ -152,7 +154,7 @@ def main():
             class_names=class_names,
             source_image_dir=image_source_dir,
             batch_size=batch_size,
-            target_size=model_factory.get_input_size(base_model_name),
+            target_size=(image_dimension, image_dimension),
             augmenter=augmenter,
             steps=validation_steps,
             shuffle_on_epoch_end=False,
