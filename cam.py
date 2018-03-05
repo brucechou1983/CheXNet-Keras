@@ -134,7 +134,6 @@ def main():
             image_source_dir=image_source_dir,
             model=model,
             generator=cam_sequence,
-            image_dimension=image_dimension,
             class_names=class_names,
         ),
         axis=1,
