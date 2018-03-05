@@ -24,7 +24,6 @@ def create_cam(df_g, output_dir, image_source_dir, model, generator, class_names
     :param image_source_dir: str
     :param model: keras model
     :param generator: generator.AugmentedImageSequence
-    :param image_dimension: int
     :param class_names: list of str
     """
     file_name = df_g["file_name"]
