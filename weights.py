@@ -23,8 +23,8 @@ def get_class_weights(total_counts, class_positive_counts, multiply):
 
     class_names = list(class_positive_counts.keys())
     label_counts = np.array(list(class_positive_counts.values()))
-    class_weights = {}
+    class_weights = []
     for i, class_name in enumerate(class_names):
-        class_weights[class_name] = get_single_class_weight(label_counts[i], total_counts)
+        class_weights.append(get_single_class_weight(label_counts[i], total_counts))
 
     return class_weights

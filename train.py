@@ -115,8 +115,7 @@ def main():
             multiply=positive_weights_multiply,
         )
         print("** class_weights **")
-        for c, w in class_weights.items():
-            print(f"  {c}: {w}")
+        print(class_weights)
 
         print("** load model **")
         if use_trained_model_weights:

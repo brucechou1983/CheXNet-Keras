@@ -126,7 +126,7 @@ def main():
     with open(test_log_path, "w") as f:
         for i in range(len(class_names)):
             try:
-                score = roc_auc_score(y[i], y_hat[i])
+                score = roc_auc_score(y[:, i], y_hat[:, i])
                 aurocs.append(score)
             except ValueError:
                 score = 0

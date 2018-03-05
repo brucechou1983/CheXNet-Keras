@@ -85,16 +85,13 @@ class ModelFactory:
             weights=base_weights,
             pooling="avg")
         x = base_model.output
-        x = Dense(1024)(x)
-        predictions = []
-        for i, class_name in enumerate(class_names):
-            prediction = Dense(1, activation="sigmoid", name=class_name)(x)
-            predictions.append(prediction)
+        predictions = Dense(len(class_names), activation="sigmoid", name="predictions")(x)
         model = Model(inputs=img_input, outputs=predictions)
 
         if weights_path == "":
             weights_path = None
 
         if weights_path is not None:
+            print(f"load model weights_path: {weights_path}")
             model.load_weights(weights_path)
         return model

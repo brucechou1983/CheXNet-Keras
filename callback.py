@@ -62,7 +62,7 @@ class MultipleClassAUROC(Callback):
         current_auroc = []
         for i in range(len(self.class_names)):
             try:
-                score = roc_auc_score(y[i], y_hat[i])
+                score = roc_auc_score(y[:, i], y_hat[:, i])
             except ValueError:
                 score = 0
             self.aurocs[self.class_names[i]].append(score)
