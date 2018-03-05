@@ -4,14 +4,14 @@ import os
 import pickle
 from callback import MultipleClassAUROC, MultiGPUModelCheckpoint
 from configparser import ConfigParser
-from generator import custom_image_generator
+from generator import AugmentedImageSequence
 from keras.callbacks import ModelCheckpoint, TensorBoard, ReduceLROnPlateau
 from keras.optimizers import Adam
-from keras.preprocessing.image import ImageDataGenerator
 from keras.utils import multi_gpu_model
-from models.densenet121 import get_model
-from utility import split_data, get_sample_counts, create_symlink
+from models.keras import ModelFactory
+from utility import get_sample_counts
 from weights import get_class_weights
+from augmenter import augmenter
 
 
 def main():
@@ -23,9 +23,7 @@ def main():
     # default config
     output_dir = cp["DEFAULT"].get("output_dir")
     image_source_dir = cp["DEFAULT"].get("image_source_dir")
-    train_patient_count = cp["DEFAULT"].getint("train_patient_count")
-    dev_patient_count = cp["DEFAULT"].getint("dev_patient_count")
-    data_entry_file = cp["DEFAULT"].get("data_entry_file")
+    base_model_name = cp["DEFAULT"].get("base_model_name")
     class_names = cp["DEFAULT"].get("class_names").split(",")
 
     # train config
@@ -36,17 +34,18 @@ def main():
     epochs = cp["TRAIN"].getint("epochs")
     batch_size = cp["TRAIN"].getint("batch_size")
     initial_learning_rate = cp["TRAIN"].getfloat("initial_learning_rate")
+    generator_workers = cp["TRAIN"].getint("generator_workers")
+    image_dimension = cp["TRAIN"].getint("image_dimension")
     train_steps = cp["TRAIN"].get("train_steps")
     patience_reduce_lr = cp["TRAIN"].getint("patience_reduce_lr")
+    min_lr = cp["TRAIN"].getfloat("min_lr")
     validation_steps = cp["TRAIN"].get("validation_steps")
     positive_weights_multiply = cp["TRAIN"].getfloat("positive_weights_multiply")
-    use_class_balancing = cp["TRAIN"].getboolean("use_class_balancing")
-    use_default_split = cp["TRAIN"].getboolean("use_default_split")
+    dataset_csv_dir = cp["TRAIN"].get("dataset_csv_dir")
     # if previously trained weights is used, never re-split
     if use_trained_model_weights:
         # resuming mode
-        print("** use trained model weights, turn on use_skip_split automatically **")
-        use_skip_split = True
+        print("** use trained model weights **")
         # load training status for resuming
         training_stats_file = os.path.join(output_dir, ".training_stats.json")
         if os.path.isfile(training_stats_file):
@@ -56,10 +55,8 @@ def main():
             training_stats = {}
     else:
         # start over
-        use_skip_split = cp["TRAIN"].getboolean("use_skip_split ")
         training_stats = {}
 
-    split_dataset_random_state = cp["TRAIN"].getint("split_dataset_random_state")
     show_model_summary = cp["TRAIN"].getboolean("show_model_summary")
     # end parser config
 
@@ -77,21 +74,9 @@ def main():
         print(f"backup config file to {output_dir}")
         shutil.copy(config_file, os.path.join(output_dir, os.path.split(config_file)[1]))
 
-        # split train/dev/test
-        if use_default_split:
-            datasets = ["train", "dev", "test"]
-            for dataset in datasets:
-                shutil.copy(f"./data/default_split/{dataset}.csv", output_dir)
-        elif not use_skip_split:
-            print("** split dataset **")
-            split_data(
-                data_entry_file,
-                class_names,
-                train_patient_count,
-                dev_patient_count,
-                output_dir,
-                split_dataset_random_state,
-            )
+        datasets = ["train", "dev", "test"]
+        for dataset in datasets:
+            shutil.copy(os.path.join(dataset_csv_dir, f"{dataset}.csv"), output_dir)
 
         # get train/dev sample counts
         train_counts, train_pos_counts = get_sample_counts(output_dir, "train", class_names)
@@ -128,17 +113,11 @@ def main():
             train_counts,
             train_pos_counts,
             multiply=positive_weights_multiply,
-            use_class_balancing=use_class_balancing
         )
         print("** class_weights **")
-        for c, w in class_weights.items():
-            print(f"  {c}: {w}")
+        print(class_weights)
 
         print("** load model **")
-        if use_base_model_weights:
-            base_model_weights_file = cp["TRAIN"].get("base_model_weights_file")
-        else:
-            base_model_weights_file = None
         if use_trained_model_weights:
             if use_best_weights:
                 model_weights_file = os.path.join(output_dir, f"best_{output_weights_name}")
@@ -146,28 +125,37 @@ def main():
                 model_weights_file = os.path.join(output_dir, output_weights_name)
         else:
             model_weights_file = None
-        model = get_model(class_names, base_model_weights_file, model_weights_file)
+
+        model_factory = ModelFactory()
+        model = model_factory.get_model(
+            class_names,
+            model_name=base_model_name,
+            use_base_weights=use_base_model_weights,
+            weights_path=model_weights_file,
+            input_shape=(image_dimension, image_dimension, 3))
+
         if show_model_summary:
             print(model.summary())
 
-        # recreate symlink folder for ImageDataGenerator
-        symlink_dir_name = "image_links"
-        create_symlink(image_source_dir, output_dir, symlink_dir_name)
-
         print("** create image generators **")
-        train_data_path = f"{output_dir}/{symlink_dir_name}/train/"
-        train_generator = custom_image_generator(
-            ImageDataGenerator(horizontal_flip=True, rescale=1./255),
-            train_data_path,
-            batch_size=batch_size,
+        train_sequence = AugmentedImageSequence(
+            dataset_csv_file=os.path.join(output_dir, "train.csv"),
             class_names=class_names,
+            source_image_dir=image_source_dir,
+            batch_size=batch_size,
+            target_size=(image_dimension, image_dimension),
+            augmenter=augmenter,
+            steps=train_steps,
         )
-        dev_data_path = f"{output_dir}/{symlink_dir_name}/dev/"
-        dev_generator = custom_image_generator(
-            ImageDataGenerator(horizontal_flip=True, rescale=1./255),
-            dev_data_path,
-            batch_size=batch_size,
+        validation_sequence = AugmentedImageSequence(
+            dataset_csv_file=os.path.join(output_dir, "dev.csv"),
             class_names=class_names,
+            source_image_dir=image_source_dir,
+            batch_size=batch_size,
+            target_size=(image_dimension, image_dimension),
+            augmenter=augmenter,
+            steps=validation_steps,
+            shuffle_on_epoch_end=False,
         )
 
         output_weights_path = os.path.join(output_dir, output_weights_name)
@@ -185,34 +173,42 @@ def main():
             )
         else:
             model_train = model
-            checkpoint = ModelCheckpoint(output_weights_path)
+            checkpoint = ModelCheckpoint(
+                 output_weights_path,
+                 save_weights_only=True,
+                 save_best_only=True,
+                 verbose=1,
+            )
 
         print("** compile model with class weights **")
         optimizer = Adam(lr=initial_learning_rate)
         model_train.compile(optimizer=optimizer, loss="binary_crossentropy")
         auroc = MultipleClassAUROC(
-            generator=dev_generator,
-            steps=validation_steps,
+            sequence=validation_sequence,
             class_names=class_names,
             weights_path=output_weights_path,
             stats=training_stats,
+            workers=generator_workers,
         )
         callbacks = [
             checkpoint,
             TensorBoard(log_dir=os.path.join(output_dir, "logs"), batch_size=batch_size),
-            ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=patience_reduce_lr, verbose=1),
+            ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=patience_reduce_lr,
+                              verbose=1, mode="min", min_lr=min_lr),
             auroc,
         ]
 
-        print("** training start **")
+        print("** start training **")
         history = model_train.fit_generator(
-            generator=train_generator,
+            generator=train_sequence,
             steps_per_epoch=train_steps,
             epochs=epochs,
-            validation_data=dev_generator,
+            validation_data=validation_sequence,
             validation_steps=validation_steps,
             callbacks=callbacks,
             class_weight=class_weights,
+            workers=generator_workers,
+            shuffle=False,
         )
 
         # dump history

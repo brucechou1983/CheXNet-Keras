@@ -8,32 +8,14 @@ from keras.callbacks import Callback
 from sklearn.metrics import roc_auc_score
 
 
-def load_generator_data(generator, steps, class_num):
-    """
-    Return some data collected from a generator, use this to ensure all images
-    are processed by exactly the same steps in the customized ImageDataGenerator.
-
-    """
-    batches_x = []
-    batches_y_classes = []
-    for i in range(class_num):
-        batches_y_classes.append([])
-    for i in range(steps):
-        batch_x, batch_y = next(generator)
-        batches_x.append(batch_x)
-        for c, batch_y_class in enumerate(batch_y):
-            batches_y_classes[c].append(batch_y_class)
-    return np.concatenate(batches_x, axis=0), [np.concatenate(c, axis=0) for c in batches_y_classes]
-
-
 class MultipleClassAUROC(Callback):
     """
     Monitor mean AUROC and update model
     """
-    def __init__(self, generator, steps, class_names, weights_path, stats=None):
+    def __init__(self, sequence, class_names, weights_path, stats=None, workers=1):
         super(Callback, self).__init__()
-        self.generator = generator
-        self.steps = steps
+        self.sequence = sequence
+        self.workers = workers
         self.class_names = class_names
         self.weights_path = weights_path
         self.best_weights_path = os.path.join(
@@ -73,14 +55,14 @@ class MultipleClassAUROC(Callback):
         y_hat shape: (#samples, len(class_names))
         y: [(#samples, 1), (#samples, 1) ... (#samples, 1)]
         """
-        x, y = load_generator_data(self.generator, self.steps, len(self.class_names))
-        y_hat = self.model.predict(x)
+        y_hat = self.model.predict_generator(self.sequence, workers=self.workers)
+        y = self.sequence.get_y_true()
 
         print(f"*** epoch#{epoch + 1} dev auroc ***")
         current_auroc = []
         for i in range(len(self.class_names)):
             try:
-                score = roc_auc_score(y[i], y_hat[i])
+                score = roc_auc_score(y[:, i], y_hat[:, i])
             except ValueError:
                 score = 0
             self.aurocs[self.class_names[i]].append(score)
