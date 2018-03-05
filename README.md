@@ -23,7 +23,10 @@ ChexNet is a deep learning algorithm that can detect and localize 14 kinds of di
 6. Run `python test.py` to evaluate your model on the test set.
 7. Run `python cam.py` to generate images with class activation mapping overlay and the ground bbox. The ground truth comes from the **BBox_List_2017.csv** file so make sure you have that file in `./data` folder. CAM images will be placed under the output folder.
 
-### Important notice on CUDA users
+## Trained model weights
+Many people are asking for a trained model, [there you go](https://drive.google.com/open?id=19BllaOvs2x5PLV_vlWMy4i8LapLb2j6b). I use this model to create the CAM example images. The testing mean auroc is about 82.9. Again, before you ask about comparing results with the original paper, think about how to do that in a meaningful way.
+
+## Important notice for CUDA 9 users
 If you use >= CUDA 9, make sure you set tensorflow_gpu >= 1.5.
 
 ## TODO
