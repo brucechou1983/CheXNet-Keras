@@ -125,11 +125,15 @@ def main():
         shuffle_on_epoch_end=False,
     )
 
+    image_output_dir = os.path.join(output_dir, "cam")
+    if not os.path.isdir(image_output_dir):
+        os.makedirs(image_output_dir)
+
     print("create CAM")
     df_images.apply(
         lambda g: create_cam(
             df_g=g,
-            output_dir=output_dir,
+            output_dir=image_output_dir,
             image_source_dir=image_source_dir,
             model=model,
             generator=cam_sequence,
