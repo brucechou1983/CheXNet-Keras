@@ -41,7 +41,6 @@ def main():
     min_lr = cp["TRAIN"].getfloat("min_lr")
     validation_steps = cp["TRAIN"].get("validation_steps")
     positive_weights_multiply = cp["TRAIN"].getfloat("positive_weights_multiply")
-    use_class_balancing = cp["TRAIN"].getboolean("use_class_balancing")
     dataset_csv_dir = cp["TRAIN"].get("dataset_csv_dir")
     # if previously trained weights is used, never re-split
     if use_trained_model_weights:
@@ -114,7 +113,6 @@ def main():
             train_counts,
             train_pos_counts,
             multiply=positive_weights_multiply,
-            use_class_balancing=use_class_balancing
         )
         print("** class_weights **")
         for c, w in class_weights.items():
