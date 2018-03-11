@@ -34,11 +34,11 @@ class AugmentedImageSequence(Sequence):
         self.shuffle = shuffle_on_epoch_end
         self.random_state = random_state
         self.class_names = class_names
+        self.prepare_dataset()
         if steps is None:
             self.steps = int(np.ceil(len(self.x_path) / float(self.batch_size)))
         else:
             self.steps = int(steps)
-        self.prepare_dataset()
 
     def __bool__(self):
         return True
