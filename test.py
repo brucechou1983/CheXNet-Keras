@@ -64,7 +64,7 @@ def main():
 
     print("** load test generator **")
     test_sequence = AugmentedImageSequence(
-        dataset_csv_file=os.path.join(output_dir, "dev.csv"),
+        dataset_csv_file=os.path.join(output_dir, "test.csv"),
         class_names=class_names,
         source_image_dir=image_source_dir,
         batch_size=batch_size,
