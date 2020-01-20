@@ -6,6 +6,13 @@ This project is a tool to build CheXNet-like models, written in Keras.
 ## What is [CheXNet](https://arxiv.org/pdf/1711.05225.pdf)?
 ChexNet is a deep learning algorithm that can detect and localize 14 kinds of diseases from chest X-ray images. As described in the paper, a 121-layer densely connected convolutional neural network is trained on ChestX-ray14 dataset, which contains 112,120 frontal view X-ray images from 30,805 unique patients. The result is so good that it surpasses the performance of practicing radiologists. If you are new to this project, [Luke Oakden-Rayner's post](https://lukeoakdenrayner.wordpress.com/2017/12/18/the-chestxray14-dataset-problems/) is highly recommended.
 
+## TODO
+1. CheXpert updates
+2. Upgrade repo to TF 2.0 (tf.keras)
+3. Sacred experiment management
+4. Better result visualization tool
+5. Model convertion/deployment tool
+
 ## In this project, you can
 1. Train/test a **baseline model** by following the quickstart. You can get a model with performance close to the paper.
 2. Run class activation mapping to see the localization of your model.
