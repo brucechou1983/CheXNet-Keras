@@ -33,6 +33,19 @@ ChexNet is a deep learning algorithm that can detect and localize 14 kinds of di
 ## Trained model weights
 Many people are asking for a trained model, [there you go](https://drive.google.com/open?id=19BllaOvs2x5PLV_vlWMy4i8LapLb2j6b). I use this model to create the CAM example images. The testing mean auroc is about 82.9. Again, before you ask about comparing results with the original paper, think about how to do that in a meaningful way.
 
+To load the weights, run the following
+```
+import tensorflow as tf
+model = tf.keras.applications.DenseNet121(include_top=False,
+                                          input_shape=(224, 224, 3),
+                                          input_tensor=tf.keras.Input(shape=(224, 224, 3)),
+                                          weights=None,
+                                          pooling="avg")
+
+model.summary()
+model.load_weights('downloaded-weights.h5')
+```
+
 ## Important notice for CUDA 9 users
 If you use >= CUDA 9, make sure you set tensorflow_gpu >= 1.5.
 
